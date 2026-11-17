@@ -1,0 +1,473 @@
+<title>Claude за 15 минут</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: одна колонка как лента Apple, крупные заголовки, серые плитки, один перелив-акцент */
+:root{
+  --bg:#FFFFFF; --fg:#1D1D1F; --soft:#6E6E73; --faint:#A1A1A6; --tile:#F5F5F7; --line:#E5E5EA;
+  --blue:#0071E3; --ink-tile:#1D1D1F; --ink-tile-fg:#FFFFFF; --ok:#2E8B4E; --ok-bg:#E4F2E7;
+  --glass-a:rgba(255,255,255,.75); --glass-b:rgba(255,255,255,.4); --glass-line:rgba(255,255,255,.95);
+  --blob1:#3D8BFF; --blob2:#FF5FA8; --blob3:#8B6BFF;
+  --grad:linear-gradient(90deg,#0A84FF 0%,#7D5CFF 35%,#FF4F9A 70%,#FF8A3D 100%);
+  --wm-dark:linear-gradient(180deg,#2A2A33,#1D1D1F 45%,#000);
+  --font:Inter,-apple-system,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#000000; --fg:#F5F5F7; --soft:#A1A1A6; --faint:#6E6E73; --tile:#1C1C1E; --line:#2C2C2E;
+  --blue:#2997FF; --ink-tile:#F5F5F7; --ink-tile-fg:#1D1D1F; --ok:#5BD08A; --ok-bg:#16301F;
+  --glass-a:rgba(40,40,46,.7); --glass-b:rgba(28,28,30,.45); --glass-line:rgba(255,255,255,.18);
+  --wm-dark:linear-gradient(180deg,#FFFFFF,#E5E5EA 50%,#C7C7CC); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#000000; --fg:#F5F5F7; --soft:#A1A1A6; --faint:#6E6E73; --tile:#1C1C1E; --line:#2C2C2E;
+  --blue:#2997FF; --ink-tile:#F5F5F7; --ink-tile-fg:#1D1D1F; --ok:#5BD08A; --ok-bg:#16301F;
+  --glass-a:rgba(40,40,46,.7); --glass-b:rgba(28,28,30,.45); --glass-line:rgba(255,255,255,.18);
+  --wm-dark:linear-gradient(180deg,#FFFFFF,#E5E5EA 50%,#C7C7CC); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:18px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+section{padding-block:clamp(56px,9vw,112px)}
+h1,h2,h3{margin:0;letter-spacing:-.03em;text-wrap:balance}
+h2{font-size:clamp(36px,6.4vw,72px);line-height:1.05;font-weight:700}
+h3{font-size:clamp(22px,2.6vw,28px);line-height:1.2;font-weight:700;letter-spacing:-.015em}
+p{margin:0}
+.g{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.06em}
+.ey{font-size:clamp(17px,2vw,21px);font-weight:600;margin-bottom:14px;display:inline-block}
+.lead{font-size:clamp(19px,2.2vw,24px);line-height:1.5;color:var(--soft);font-weight:500;max-width:34em;margin-top:22px}
+.lead b{color:var(--fg);font-weight:600}
+.stack{display:grid;gap:16px}
+.muted{color:var(--soft)}
+
+/* фон-пятна для стекла */
+.blobs{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.blobs i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.28}
+.blobs i:nth-child(1){width:420px;height:260px;background:var(--blob1);left:-60px;top:-40px;animation:drift1 14s ease-in-out infinite alternate}
+.blobs i:nth-child(2){width:360px;height:240px;background:var(--blob2);right:-80px;top:180px;opacity:.2;animation:drift2 16s ease-in-out infinite alternate}
+.blobs i:nth-child(3){width:340px;height:220px;background:var(--blob3);left:30%;top:60px;opacity:.18;animation:drift1 18s ease-in-out infinite alternate-reverse}
+@keyframes drift1{to{transform:translate(80px,40px)}}
+@keyframes drift2{to{transform:translate(-90px,-30px)}}
+
+/* шапка */
+.top{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:22px}
+.glass{position:relative;display:inline-flex;align-items:center;gap:12px;padding:9px 20px 10px 9px;border-radius:999px;background:linear-gradient(180deg,var(--glass-a),var(--glass-b));backdrop-filter:blur(22px) saturate(1.8);-webkit-backdrop-filter:blur(22px) saturate(1.8);border:1.5px solid var(--glass-line);box-shadow:inset 0 2px 1px var(--glass-line),0 14px 30px -14px rgba(40,60,160,.35)}
+.glass::after{content:"";position:absolute;left:16px;right:16px;top:3px;height:40%;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,0));pointer-events:none;opacity:.8}
+.mark{width:38px;height:38px;flex:none;border-radius:50%;background:radial-gradient(circle at 35% 28%,#9FD0FF 0%,#0A84FF 45%,#3B2CC9 100%);box-shadow:inset 0 3px 4px rgba(255,255,255,.7),inset 0 -5px 8px rgba(0,0,40,.35),0 6px 14px -4px rgba(10,80,255,.6);display:grid;place-items:center}
+.mark svg{width:20px;height:20px}
+.wm{font-size:22px;font-weight:800;letter-spacing:-.03em;line-height:1.1;background:var(--wm-dark);-webkit-background-clip:text;background-clip:text;color:transparent}
+.wm em{font-style:normal;background:linear-gradient(180deg,#5AB0FF,#0A84FF 40%,#5B3DF5);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tag{font-size:15px;font-weight:600;color:var(--soft);background:var(--tile);padding:8px 14px;border-radius:999px}
+
+/* герой */
+.hero{position:relative;padding-top:28px;padding-bottom:clamp(48px,7vw,88px)}
+.hero .wrap{position:relative;z-index:1}
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(24px,4vw,56px);align-items:center;margin-top:clamp(36px,6vw,72px)}
+.hero h1{font-size:clamp(44px,8vw,96px);line-height:1.02;font-weight:800;letter-spacing:-.045em}
+.btns{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.btn{display:inline-flex;align-items:center;gap:8px;font:600 17px/1 var(--font);padding:16px 26px;border-radius:999px;border:0;cursor:pointer;text-decoration:none;transition:transform .2s ease,opacity .2s}
+.btn:hover{transform:translateY(-1px)}
+.btn:focus-visible,.copy:focus-visible,.tabs button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.btn-p{background:var(--blue);color:#fff}
+.btn-s{background:var(--tile);color:var(--fg)}
+
+/* чат */
+.chat{background:var(--tile);border-radius:32px;padding:18px;min-width:0}
+.chat-in{background:var(--bg);border-radius:24px;padding:22px;box-shadow:0 30px 60px -36px rgba(0,0,0,.35);position:relative;min-height:300px;overflow:hidden}
+.chat-lab{font-size:14px;font-weight:600;color:var(--soft);display:flex;align-items:center;gap:8px}
+.chat-lab i{width:9px;height:9px;border-radius:50%;background:var(--grad)}
+.bubble{margin:18px 0 0 auto;width:max-content;max-width:90%;background:var(--blue);color:#fff;font-weight:600;font-size:20px;padding:12px 18px;border-radius:20px 20px 6px 20px;min-height:50px}
+.caret{display:inline-block;width:2px;height:22px;background:#fff;vertical-align:-4px;margin-left:2px;opacity:0}
+.typing .caret{opacity:1;animation:blink .8s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.ans{margin-top:16px;font-size:16px;line-height:1.55;color:var(--faint);transition:opacity .5s ease,transform .5s ease}
+.stamp{position:absolute;right:16px;bottom:16px;font-weight:800;font-size:16px;color:#fff;background:var(--grad);padding:10px 16px;border-radius:14px;transform:rotate(-4deg);box-shadow:0 14px 26px -12px rgba(125,92,255,.7);transition:transform .35s cubic-bezier(.2,1.4,.4,1),opacity .3s}
+.who{position:absolute;right:120px;top:108px;display:flex;align-items:flex-start;gap:3px;transition:opacity .4s}
+.who span{font-size:12px;font-weight:700;color:#fff;background:#FF4F9A;padding:3px 8px;border-radius:6px;margin-top:14px}
+.hidden-a{opacity:0;transform:translateY(8px)}
+.hidden-s{opacity:0;transform:rotate(-4deg) scale(1.5)}
+
+/* синдром */
+.quote{font-size:clamp(22px,3vw,30px);line-height:1.45;font-weight:600;letter-spacing:-.015em;max-width:30em;margin-top:28px}
+.quote .muted{font-weight:500}
+.tele{display:inline-block;font-family:var(--mono);font-size:.8em;background:var(--tile);padding:2px 10px;border-radius:8px;letter-spacing:0}
+
+/* формула */
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:40px}
+.card{background:var(--tile);border-radius:28px;padding:26px 24px;min-width:0;transition:transform .25s ease}
+.card:hover{transform:translateY(-3px)}
+.card svg{width:40px;height:40px;margin-bottom:18px}
+.card h3{margin-bottom:6px}
+.card p{color:var(--soft);font-size:17px}
+.card .hint{display:block;margin-top:12px;font-size:14px;font-weight:600;color:var(--faint)}
+.card.ink{background:var(--ink-tile);color:var(--ink-tile-fg)}
+.card.ink p{color:var(--ink-tile-fg);opacity:.72}.card.ink .hint{color:var(--ink-tile-fg);opacity:.5}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.row{border-radius:28px;padding:22px 24px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.row .pill{align-self:flex-start;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 12px;border-radius:999px}
+.was{background:var(--tile);color:var(--faint)}
+.was .pill{background:var(--bg);color:var(--faint)}
+.now{background:var(--tile)}
+.now .pill{background:var(--blue);color:#fff}
+.now p{font-size:17px}
+
+/* блок промпта */
+.prompt{background:var(--tile);border-radius:24px;padding:20px;position:relative;min-width:0}
+.prompt pre{margin:0;font-family:var(--font);font-size:16.5px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;color:var(--fg)}
+.prompt .ph{color:var(--blue);font-weight:600}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.phead b{font-size:17px}
+.copy{font:600 15px/1 var(--font);border:0;cursor:pointer;background:var(--bg);color:var(--blue);padding:10px 16px;border-radius:999px;box-shadow:0 1px 0 var(--line)}
+.copy.done{background:var(--ok-bg);color:var(--ok)}
+
+/* быстрая победа */
+.win{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(20px,4vw,48px);margin-top:36px;align-items:start}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:14px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;counter-increment:s}
+.steps li::before{content:counter(s);width:44px;height:44px;border-radius:50%;background:var(--tile);display:grid;place-items:center;font-weight:700;color:var(--blue)}
+.steps b{display:block;font-size:19px}
+.steps span{color:var(--soft);font-size:17px}
+.get{margin-top:22px;background:var(--ok-bg);border-radius:22px;padding:18px 20px;color:var(--fg);font-size:17px}
+.get b{color:var(--ok)}
+
+/* промпты */
+.plist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:36px}
+.plist .prompt:last-child:nth-child(odd){grid-column:1/-1}
+
+/* вау */
+.wow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-top:36px}
+.w{background:var(--tile);border-radius:28px;padding:24px;min-width:0;display:flex;flex-direction:column;gap:10px;grid-column:span 2}
+.w.big{grid-column:span 3}
+.w .t{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.w p{color:var(--soft);font-size:17px}
+.w .vis{height:110px;border-radius:18px;background:var(--bg);position:relative;overflow:hidden;margin-bottom:6px}
+.w.soon .t{color:#FF4F9A}
+.show{margin:14px 0 0;background:var(--tile);border-radius:32px;padding:clamp(18px,3vw,32px);display:grid;gap:20px}
+.show-head{display:grid;gap:8px;max-width:46em}
+.show-head .t{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
+.show-head p{color:var(--soft);font-size:17px}
+.show-vid{border-radius:20px;overflow:hidden;background:#0B0B0D;aspect-ratio:1920/1200;max-width:100%;box-shadow:0 40px 70px -40px rgba(0,0,0,.55)}
+.show-vid video{display:block;width:100%;height:100%;object-fit:cover}
+.show figcaption{font-size:15px;color:var(--faint)}
+
+/* вкладки */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:32px;padding:6px;background:var(--tile);border-radius:999px;width:max-content;max-width:100%}
+.tabs button{font:600 16px/1 var(--font);border:0;background:transparent;color:var(--soft);padding:12px 18px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--bg);color:var(--fg);box-shadow:0 6px 14px -8px rgba(0,0,0,.35)}
+.panel{margin-top:20px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.panel .it{background:var(--tile);border-radius:22px;padding:20px 22px;min-width:0}
+.panel .it b{display:block;font-size:19px;margin-bottom:4px}
+.panel .it span{color:var(--soft);font-size:16.5px}
+.note{margin-top:14px;font-size:15px;color:var(--faint)}
+
+/* программа */
+.days{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:36px}
+.day{background:var(--tile);border-radius:28px;padding:26px;min-width:0}
+.day h3{margin-bottom:14px}
+.day ol{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.day li{display:grid;grid-template-columns:34px 1fr;gap:10px;font-size:17px}
+.day li span{font-variant-numeric:tabular-nums;font-weight:700;color:var(--faint)}
+.day li.free span{color:var(--blue)}
+.day li.free em{font-style:normal;font-size:13px;font-weight:700;color:var(--blue);margin-left:6px}
+.zero{margin-top:14px;background:var(--tile);border-radius:22px;padding:18px 22px;font-size:17px}
+
+/* финал */
+.final{text-align:center;position:relative;overflow:hidden}
+.final .wrap{position:relative;z-index:1}
+.code{display:inline-flex;align-items:center;gap:14px;margin-top:30px;font-size:clamp(28px,5vw,44px);font-weight:800;letter-spacing:.02em;padding:18px 34px;border-radius:999px;background:var(--ink-tile);color:var(--ink-tile-fg)}
+.code small{font-size:15px;font-weight:600;letter-spacing:0;opacity:.6}
+.foot{padding-block:28px 40px;color:var(--faint);font-size:15px;text-align:center}
+
+@media (max-width:860px){
+  .hero-grid,.win,.days{grid-template-columns:1fr}
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .wow{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .w,.w.big{grid-column:span 1}
+  .w.soon{grid-column:1/-1}
+}
+@media (max-width:560px){
+  body{font-size:17px}
+  .cards,.cmp,.plist,.panel,.wow{grid-template-columns:1fr}
+  .w.soon{grid-column:auto}
+  .tabs{border-radius:22px}
+  .who{right:96px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+
+<header class="hero">
+  <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="wrap">
+    <div class="top">
+      <div class="glass"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/></svg></span><span class="wm">Claude <em>за выходные</em></span></div>
+      <span class="tag">Бесплатный гайд · 15 минут</span>
+    </div>
+    <div class="hero-grid">
+      <div>
+        <span class="ey g">Гайд для тех, кому ИИ «пишет как робот»</span>
+        <h1>Твой ИИ не тупой. <span class="g">Он тебя просто не знает.</span></h1>
+        <p class="lead">Мой знакомый Колян неделю пользовался нейросетью и сказал: «Фигня ваш ИИ». А потом я открыл его чат. Там было три слова. <b>За 15 минут покажу, как писать, чтобы Claude отвечал под тебя, а не «для всех».</b></p>
+        <div class="btns"><a class="btn btn-p" href="#formula">Начать</a><a class="btn btn-s" href="#win">Сразу к быстрой победе</a></div>
+      </div>
+      <div class="chat" aria-label="Пример чата Коляна">
+        <div class="chat-in">
+          <div class="chat-lab"><i></i>Чат Коляна</div>
+          <div class="bubble" id="bubble"><span id="typed">Пост про кофе</span><span class="caret"></span></div>
+          <p class="ans" id="ans">Кофе это больше чем напиток. Это ритуал, который наполняет утро энергией. Приходите к нам за чашечкой ароматного кофе! #кофе #утро #кофейня</p>
+          <div class="who" id="who" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 2l7 19 2.5-7.5L20 11z" fill="#FF4F9A" stroke="#fff" stroke-width="1.2"/></svg><span>Колян</span></div>
+          <div class="stamp" id="stamp">Синдром телеграммы</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="why">
+  <div class="wrap">
+    <span class="ey g">Что не так с Коляном</span>
+    <h2>Это называется <span class="g">синдром телеграммы.</span></h2>
+    <p class="quote">Пишешь коротко, как будто платишь за каждое слово. <span class="tele">ПОСТ ТЧК КОФЕ ТЧК</span> А потом удивляешься, что получил ответ для всех сразу. <span class="muted">То есть ни для кого.</span></p>
+    <p class="lead">Представь нового сотрудника. Первый день. Умный, быстрый, но про тебя не знает ни хрена. Говоришь ему «сделай пост», он и сделает. Средний. <b>Claude в каждом новом чате такой же новенький.</b> Лечится это четырьмя вопросами.</p>
+  </div>
+</section>
+
+<section id="formula" style="background:linear-gradient(var(--bg),var(--bg))">
+  <div class="wrap">
+    <span class="ey g">Главное в гайде</span>
+    <h2>Формула запроса. <span class="g">Четыре вопроса.</span></h2>
+    <p class="lead">Тридцать секунд на запрос, а разница как между шаурмой на вокзале и домашним ужином.</p>
+    <div class="cards">
+      <div class="card"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><h3>Кто я</h3><p>У меня небольшая кофейня в спальном районе.</p><span class="hint">Одно предложение, и он уже не пишет для «Старбакса».</span></div>
+      <div class="card"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linecap="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><h3>Что не нравится</h3><p>Утром очередь, а с обеда до вечера почти никого.</p><span class="hint">Скажи, где болит. Иначе он лечит всё подряд.</span></div>
+      <div class="card"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="var(--blue)"/></svg><h3>Что нужно</h3><p>Пост для Instagram, чтобы люди заходили на кофе и днём.</p><span class="hint">Это задача. «Пост про кофе» это тема.</span></div>
+      <div class="card ink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M7 9h10M7 13h6"/></svg><h3>В каком виде</h3><p>По-дружески, как пишет сосед. Без слова «акция». До 500 знаков. 3 варианта.</p><span class="hint">Без этого получишь простыню с тремя «!!!».</span></div>
+    </div>
+    <div class="cmp">
+      <div class="row was"><span class="pill">Было</span><p><s>«Пост про кофе»</s></p><p style="font-size:15px">Ответ для всех. Можно повесить в любой кофейне страны.</p></div>
+      <div class="row now"><span class="pill">Стало</span><p><b>Четыре предложения.</b> Ответ про твою кофейню, твоих гостей и твой пустой зал после обеда. Такое можно выкладывать.</p></div>
+    </div>
+    <div class="stack" style="margin-top:28px">
+      <div class="prompt">
+        <div class="phead"><b>Шаблон. Скопируй и заполни</b><button class="copy" type="button" data-copy="tpl">Скопировать</button></div>
+<pre id="tpl">Кто я: <span class="ph">___</span>
+Что не нравится: <span class="ph">___</span>
+Что нужно: <span class="ph">___</span>
+В каком виде: <span class="ph">___</span>
+Пример (если есть): <span class="ph">___</span></pre>
+      </div>
+      <p class="muted" style="font-size:17px">Лайфхак сверху: есть пост, который тебе нравится? Вставь его и напиши «сделай в таком же стиле». Один пример лучше десяти объяснений.</p>
+    </div>
+  </div>
+</section>
+
+<section id="win">
+  <div class="wrap">
+    <span class="ey g">Быстрая победа · 15 минут</span>
+    <h2>Отдай Claude <span class="g">свою неделю.</span></h2>
+    <p class="lead">Самое полезное, что можно сделать в первый день. Ты рассказываешь голосом, чем занят, а он находит, что может забрать у тебя уже сегодня.</p>
+    <div class="win">
+      <div>
+        <ol class="steps">
+          <li><div><b>Открой Claude и новый чат</b><span>На телефоне или на компьютере, без разницы.</span></div></li>
+          <li><div><b>Вставь промпт справа</b><span>Нажми «Скопировать», вставь и отправь.</span></div></li>
+          <li><div><b>Наговори голосом 3–5 минут</b><span>Работа, дом, учёба, всё подряд. Сбивчиво можно, с «э-э» тоже. Он поймёт.</span></div></li>
+          <li><div><b>Ответь на его вопросы</b><span>Он сам спросит, чего не хватает.</span></div></li>
+        </ol>
+        <p class="get"><b>Что получишь:</b> список своих дел, разложенный по полочкам, и 3 задачи, которые Claude сделает прямо сейчас.</p>
+      </div>
+      <div class="prompt">
+        <div class="phead"><b>Промпт «Разбор недели»</b><button class="copy" type="button" data-copy="p0">Скопировать</button></div>
+<pre id="p0">Хочу разгрузить свою неделю. Сейчас я голосом расскажу, чем занимаюсь: работа, дом, учёба, хобби, всё подряд.
+
+Что сделать:
+1. Сначала задай мне 3–5 уточняющих вопросов.
+2. Выпиши все мои задачи списком.
+3. Раздели их на три группы: «ты можешь сделать за меня», «можешь помочь», «только моё».
+4. Для каждой задачи из первых двух групп напиши, сколько времени в неделю я сэкономлю.
+5. В конце предложи 3 быстрые победы, которые сделаем прямо в этом чате.
+
+Пиши простыми словами, без терминов. Готов рассказывать?</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="prompts">
+  <div class="wrap">
+    <span class="ey g">5 промптов из курса</span>
+    <h2>Скопировал. <span class="g">Заполнил синее.</span> Отправил.</h2>
+    <p class="lead">Все собраны по формуле. Синие слова меняешь на свои, остальное оставляешь.</p>
+    <div class="plist">
+      <div class="prompt">
+        <div class="phead"><b>Ответить на неприятное сообщение</b><button class="copy" type="button" data-copy="p1">Скопировать</button></div>
+<pre id="p1">Я <span class="ph">[кто ты: арендатор, сотрудник, родитель]</span>. Мне написали вот это: <span class="ph">[вставь сообщение]</span>. Меня задело, но ссориться не хочу. Нужно ответить спокойно и твёрдо, чтобы <span class="ph">[чего добиваешься]</span>. Дай 3 варианта: мягкий, нейтральный и жёсткий. Каждый до 5 предложений.</pre>
+      </div>
+      <div class="prompt">
+        <div class="phead"><b>Найти подвох в договоре</b><button class="copy" type="button" data-copy="p2">Скопировать</button></div>
+<pre id="p2">Прикрепляю договор <span class="ph">[аренды / подряда / кредита]</span>. Я в нём <span class="ph">[кто ты]</span>. Боюсь, что меня могут подставить. Найди пункты, где для меня есть риск, и объясни каждый простыми словами. В конце список вопросов, которые стоит задать до подписания.</pre>
+      </div>
+      <div class="prompt">
+        <div class="phead"><b>Меню на неделю из того, что есть</b><button class="copy" type="button" data-copy="p3">Скопировать</button></div>
+<pre id="p3">Нас <span class="ph">[сколько человек]</span>, готовить могу <span class="ph">[сколько минут в день]</span>. Прикрепляю фото холодильника и полок. Не люблю <span class="ph">[что не ешь]</span>. Составь меню на 7 дней, чтобы по максимуму использовать то, что уже есть. Таблица по дням и отдельный список, что докупить.</pre>
+      </div>
+      <div class="prompt">
+        <div class="phead"><b>Объяснить сложное как другу</b><button class="copy" type="button" data-copy="p4">Скопировать</button></div>
+<pre id="p4">Объясни мне <span class="ph">[тема: налоговый вычет, ипотека, как работает VPN]</span> так, как объяснял бы другу на кухне. Без терминов, с бытовым примером. Потом задай мне 3 вопроса, чтобы проверить, понял ли я.</pre>
+      </div>
+      <div class="prompt">
+        <div class="phead"><b>План недели без перегруза</b><button class="copy" type="button" data-copy="p5">Скопировать</button></div>
+<pre id="p5">Вот мои дела на неделю: <span class="ph">[надиктуй всё подряд]</span>. Работаю <span class="ph">[график]</span>. Разложи дела по дням так, чтобы в день было не больше 3 важных задач. Срочное поставь первым. Покажи таблицей, а в конце скажи, что можно выкинуть без последствий.</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="wow">
+  <div class="wrap">
+    <span class="ey g">А теперь вау</span>
+    <h2>Claude умеет не только <span class="g">отвечать.</span></h2>
+    <p class="lead">Он собирает работающие вещи прямо в чате. Без кода, без программиста. Вот что ты сделаешь своими руками во второй день курса.</p>
+    <div class="wow">
+      <div class="w big"><div class="vis" aria-hidden="true"><svg viewBox="0 0 300 110" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect x="18" y="16" width="120" height="12" rx="6" fill="var(--fg)" opacity=".85"/><rect x="18" y="36" width="190" height="8" rx="4" fill="var(--faint)" opacity=".6"/><rect x="18" y="50" width="160" height="8" rx="4" fill="var(--faint)" opacity=".6"/><rect x="18" y="72" width="80" height="22" rx="11" fill="var(--blue)"/><rect x="220" y="16" width="62" height="78" rx="12" fill="var(--tile)"/></svg></div><span class="t">5 минут</span><h3>Страница про себя</h3><p>Визитка, меню кофейни, прайс мастера. Открывается по ссылке, можно отправить другу.</p></div>
+      <div class="w big"><div class="vis" aria-hidden="true"><svg viewBox="0 0 300 110" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"><rect x="0" y="86" width="300" height="24" fill="var(--tile)"/><rect x="60" y="56" width="26" height="30" rx="6" fill="var(--blue)"/><rect x="170" y="62" width="18" height="24" rx="4" fill="#FF4F9A"/><rect x="236" y="50" width="18" height="36" rx="4" fill="#FF8A3D"/><circle cx="73" cy="44" r="4" fill="var(--fg)"/><text x="18" y="28" font-family="Inter,Arial" font-weight="700" font-size="16" fill="var(--fg)">Счёт: 120</text></svg></div><span class="t">10 минут</span><h3>Мини-игра</h3><p>Описал словами, получил игру. Сыграть можно прямо в браузере.</p></div>
+      <div class="w"><span class="t">1 вечер</span><h3>Свой гайд</h3><p>Как этот, только по твоей теме. План, текст, оформление.</p></div>
+      <div class="w"><span class="t">30 минут</span><h3>Мини-приложение</h3><p>Трекер привычек, бюджет, тренажёр слов. Под твою задачу.</p></div>
+      <div class="w soon"><span class="t">Тизер второго курса</span><h3>Telegram-бот</h3><p>Покажу бота, которого собрал Claude, и дам промпт-ТЗ. Как его запустить, разберём во втором курсе.</p></div>
+    </div>
+    <figure class="show">
+      <div class="show-head">
+        <span class="t">Мой пример · один вечер</span>
+        <h3>Как Claude собирал мне приложение</h3>
+        <p>Я написал одно сообщение: «Хочу игру: шкала 0–100%, план на 30 дней с заданиями на каждый день». Дальше смотри сам. Слева задачи, по центру растёт приложение, внизу таймлайн с 21:31 до 22:29. Код я не писал ни строки.</p>
+      </div>
+      <div class="show-vid"><video src="media/tracker.mp4" poster="media/tracker.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Запись экрана: Claude собирает трекер «Путь до первой продажи»"></video></div>
+      <figcaption>10 шагов, бот в Telegram и мини-приложение на 4 вкладки. Видео ускорено, 60 кадров в секунду.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="uses">
+  <div class="wrap">
+    <span class="ey g">Где пригодится</span>
+    <h2>Что делать с Claude <span class="g">в обычной жизни.</span></h2>
+    <div class="tabs" role="tablist" aria-label="Сферы">
+      <button role="tab" id="t-work" aria-controls="u-work" aria-selected="true">Работа</button>
+      <button role="tab" id="t-study" aria-controls="u-study" aria-selected="false">Учёба</button>
+      <button role="tab" id="t-content" aria-controls="u-content" aria-selected="false">Контент</button>
+      <button role="tab" id="t-side" aria-controls="u-side" aria-selected="false">Подработка</button>
+      <button role="tab" id="t-yt" aria-controls="u-yt" aria-selected="false">YouTube без лица</button>
+    </div>
+    <div class="panel" role="tabpanel" id="u-work" aria-labelledby="t-work">
+      <div class="it"><b>Письма и ответы</b><span>Клиенту, начальнику, в управляйку. Вежливо и по делу.</span></div>
+      <div class="it"><b>Разбор документов</b><span>Договор, выписка, инструкция на 40 страниц. Главное за минуту.</span></div>
+      <div class="it"><b>Таблицы из хаоса</b><span>Скинул заметки или скриншоты, получил аккуратную таблицу.</span></div>
+      <div class="it"><b>Подготовка к собеседованию</b><span>Он задаёт вопросы как работодатель и разбирает твои ответы.</span></div>
+    </div>
+    <div class="panel" role="tabpanel" id="u-study" aria-labelledby="t-study" hidden>
+      <div class="it"><b>Сложное простыми словами</b><span>Любая тема как от друга, с примером из жизни.</span></div>
+      <div class="it"><b>План подготовки</b><span>К экзамену или на права. По дням, с учётом твоего времени.</span></div>
+      <div class="it"><b>Проверь себя</b><span>Он составит тест по теме и объяснит ошибки.</span></div>
+      <div class="it"><b>Конспект лекции</b><span>Вставил расшифровку, получил выжимку и список терминов.</span></div>
+    </div>
+    <div class="panel" role="tabpanel" id="u-content" aria-labelledby="t-content" hidden>
+      <div class="it"><b>Идеи на месяц</b><span>30 тем под твою нишу и аудиторию, а не общие советы.</span></div>
+      <div class="it"><b>Посты в твоём стиле</b><span>Дал ему свои старые тексты, и он пишет похоже.</span></div>
+      <div class="it"><b>Сценарии рилсов</b><span>Цепляющее начало, структура, призыв в конце.</span></div>
+      <div class="it"><b>Карусели</b><span>Длинный пост превращается в слайды с заголовками.</span></div>
+    </div>
+    <div class="panel" role="tabpanel" id="u-side" aria-labelledby="t-side" hidden>
+      <div class="it"><b>Тексты для малого бизнеса</b><span>Описания, посты, ответы на отзывы для знакомых кафе и мастеров.</span></div>
+      <div class="it"><b>Страницы-визитки</b><span>Собираются в чате за вечер. Мастеру маникюра или репетитору.</span></div>
+      <div class="it"><b>Меню, прайсы, гайды</b><span>Красиво оформить то, что у людей лежит в заметках.</span></div>
+      <div class="it"><b>Мини-приложения</b><span>Калькулятор доставки, запись на услугу, простые таблицы учёта.</span></div>
+    </div>
+    <div class="panel" role="tabpanel" id="u-yt" aria-labelledby="t-yt" hidden>
+      <div class="it"><b>Идеи роликов</b><span>Темы под нишу канала и список из 20 названий.</span></div>
+      <div class="it"><b>Сценарии</b><span>Текст под озвучку с цепляющим началом и удержанием.</span></div>
+      <div class="it"><b>Упаковка</b><span>Заголовки, описания, идеи для обложек.</span></div>
+      <div class="it"><b>Промпты для картинок и видео</b><span>Claude пишет задания для нейросетей, которые рисуют и оживляют кадры.</span></div>
+    </div>
+    <p class="note">Сколько на этом можно заработать, зависит от города, ниши и тебя. Цифр не обещаю: обещать их было бы враньём.</p>
+  </div>
+</section>
+
+<section id="program">
+  <div class="wrap">
+    <span class="ey g">Курс «Claude за выходные»</span>
+    <h2>Два дня. <span class="g">Тринадцать уроков.</span></h2>
+    <p class="lead">Этот гайд это кусочек третьего урока. Вот что в курсе целиком. Каждый урок: видео 3–7 минут, текст и задание.</p>
+    <div class="days">
+      <div class="day">
+        <h3>День 1. Claude отвечает как надо</h3>
+        <ol>
+          <li><span>01</span>Что такое Claude простыми словами</li>
+          <li><span>02</span>Интерфейс за 10 минут и голос</li>
+          <li class="free"><span>03</span>Формула запроса<em>есть в гайде</em></li>
+          <li><span>04</span>Диалог, а не один вопрос</li>
+          <li class="free"><span>05</span>Разбор твоих задач<em>есть в гайде</em></li>
+          <li><span>06</span>Файлы и фото: договоры, скриншоты, таблицы</li>
+        </ol>
+      </div>
+      <div class="day">
+        <h3>День 2. Вау-эффекты</h3>
+        <ol>
+          <li><span>07</span>Страница и мини-игра за 5 минут</li>
+          <li><span>08</span>Свой гайд за вечер</li>
+          <li><span>09</span>Мини-приложение для себя</li>
+          <li><span>10</span>Скиллы и коннекторы</li>
+          <li><span>11</span>Контент: идеи, посты, рилсы</li>
+          <li><span>12</span>Поиск, лимиты и безопасность</li>
+          <li><span>13</span>Где это даёт время и деньги + тизер бота</li>
+        </ol>
+      </div>
+    </div>
+    <p class="zero"><b>Модуль 0. Доступ.</b> <span class="muted">Честно про риски, запасные нейросети для каждого урока и какой тариф брать.</span></p>
+    <p class="zero"><b>Бонусы.</b> <span class="muted">30+ промптов, набор скиллов для новичка, шпаргалка на 1 страницу, чек-лист «Проверь ответ нейросети».</span></p>
+  </div>
+</section>
+
+<section class="final" id="cta">
+  <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="wrap">
+    <span class="ey g">Хочешь весь курс?</span>
+    <h2>Напиши мне в директ <span class="g">одно слово.</span></h2>
+    <p class="lead" style="margin-inline:auto">Пришлю программу, дату старта и цену первым.</p>
+    <div class="code">КУРС <small>в директ Instagram</small></div>
+    <p class="lead" style="margin-inline:auto;font-size:17px">А Колян, кстати, теперь пишет запросы длиннее, чем сообщения своей девушке.</p>
+  </div>
+</section>
+</main>
+<footer class="foot">Дмитрий · Нейросети с нуля</footer>
+
+<script>
+(function(){
+  // копирование
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){
+      var el=document.getElementById(b.dataset.copy); var txt=el.innerText;
+      function ok(){b.textContent='Скопировано';b.classList.add('done');setTimeout(function(){b.textContent='Скопировать';b.classList.remove('done')},1800)}
+      function fallback(){var r=document.createRange();r.selectNodeContents(el);var s=window.getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Выделено, жми «Копировать»'}
+      try{navigator.clipboard.writeText(txt).then(ok,fallback)}catch(e){fallback()}
+    });
+  });
+  // вкладки
+  var tabs=[].slice.call(document.querySelectorAll('[role=tab]'));
+  function sel(t){tabs.forEach(function(x){var on=x===t;x.setAttribute('aria-selected',on);x.tabIndex=on?0:-1;document.getElementById(x.getAttribute('aria-controls')).hidden=!on});}
+  tabs.forEach(function(t,i){t.addEventListener('click',function(){sel(t)});t.addEventListener('keydown',function(e){var d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){var n=tabs[(i+d+tabs.length)%tabs.length];sel(n);n.focus()}})});
+  sel(tabs[0]);
+  // чат Коляна: проигрывается после загрузки, в покое всё видно
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  var T='Пост про кофе',typed=document.getElementById('typed'),bub=document.getElementById('bubble'),ans=document.getElementById('ans'),st=document.getElementById('stamp');
+  function play(){
+    typed.textContent='';ans.classList.add('hidden-a');st.classList.add('hidden-s');bub.classList.add('typing');
+    var i=0;var iv=setInterval(function(){i++;typed.textContent=T.slice(0,i);if(i>=T.length){clearInterval(iv);
+      setTimeout(function(){bub.classList.remove('typing');ans.classList.remove('hidden-a')},500);
+      setTimeout(function(){st.classList.remove('hidden-s')},1700);
+      setTimeout(play,9000);}},110);
+  }
+  setTimeout(play,900);
+})();
+</script>
